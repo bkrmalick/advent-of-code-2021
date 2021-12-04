@@ -5,111 +5,68 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
+	"strconv"
 	"strings"
 )
-
-type charCount struct{
-	char string
-	freq int
-}
-
-type ColCharCounts []*charCount
-
-func (d *ColCharCounts) IncColCharCountFor(char string){
-	found := false
-	for _,cc := range *d {
-		if cc.char == char {
-			cc.freq++
-			found=true
-		}
-	}
-
-	if !found {
-		*d = append(*d, &charCount{char, 1})
-	}
-}
-
-// Len is part of sort.Interface.
-func (d ColCharCounts) Len() int {
-	return len(d)
-}
-
-// Swap is part of sort.Interface.
-func (d ColCharCounts) Swap(i, j int) {
-	d[i], d[j] = d[j], d[i]
-}
-
-// Less is part of sort.Interface. We use count as the value to sort by
-func (d ColCharCounts) Less(i, j int) bool {
-	return d[i].freq < d[j].freq
-}
 
 func A() {
 	utils.SetBasePathToCurrentDir()
 
 	file, err := os.Open("input.txt")
+	utils.HandleError(err, "opening input file")
+	defer func(file *os.File) {
+		err := file.Close()
+		utils.HandleError(err, "closing input file")
+	}(file)
 
-	utils.HandleError(err, "while opening input file")
-
-	charCounts:=  make(map[int]ColCharCounts) // <col_no, <char, count> >
+	allLines := []string{}
 
 	scanner := bufio.NewScanner(file)
 	numberOfCols := 0
-	for row:=0; scanner.Scan();row++ {
-		currentLine  := strings.TrimSpace(scanner.Text())
+	for row := 0; scanner.Scan(); row++ {
+		currentLine := strings.TrimSpace(scanner.Text())
+		allLines = append(allLines, currentLine)
 
-		for col, c := range currentLine {
-			if charCounts[col] == nil{
-				charCounts[col] = ColCharCounts{}
-			}
-
-			colCharCounts:=charCounts[col]
-
-			colCharCounts.IncColCharCountFor(string(c))
-			charCounts[col]=colCharCounts
-			//fmt.Println()
+		if len(currentLine) > numberOfCols {
+			// assumption that all lines same number of columns
+			// so this might be unnecessary
+			numberOfCols = len(currentLine)
 		}
-
-		numberOfCols = len(currentLine)
 	}
 	gamRate := ""
 	epsRate := ""
 
-	for i:=0; i<numberOfCols;i++ {
-		cc := charCounts[i]
-		sort.Sort(cc)
-
-		//fmt.Println(cc)
-
-		min, max := getMaxMinFreqCharForColumn(cc)
-
-		gamRate = gamRate+max
-		epsRate = epsRate+min
+	for i := 0; i < numberOfCols; i++ {
+		min, max := getMinMaxFreqChars(allLines, i, "0")
+		gamRate = gamRate + max
+		epsRate = epsRate + min
 	}
 
 	fmt.Println("Gamma rate: ", utils.Binary2Int(gamRate))
 	fmt.Println("Epsilon rate: ", utils.Binary2Int(epsRate))
-	fmt.Println("Ans: ",  utils.Binary2Int(gamRate)*utils.Binary2Int(epsRate))
+	fmt.Println("Ans: ", utils.Binary2Int(gamRate)*utils.Binary2Int(epsRate))
 }
 
-func getMaxMinFreqCharForColumn(freqList ColCharCounts) (string, string){
-	min :=  freqList[0].freq
-	max :=  freqList[0].freq
+// given a list of binary numbers, finds the characters with the max and min frequency in a particular column
+// assumes the characters are binary i.e. one of ["1", "0"] can provide a tiebreaker character to return when
+// frequency of both characters are the same in the column
+func getMinMaxFreqChars(ls []string, colNumber int, tiebreaker string) (string, string) {
+	sum := 0
 
-	minChar := freqList[0].char
-	maxChar := freqList[0].char
-	for _,v := range freqList{
-		if v.freq > max {
-			max = v.freq
-			maxChar = v.char
-		}
-		if v.freq < min {
-			min = v.freq
-			minChar = v.char
-		}
+	for _, v := range ls {
+		x, err := strconv.Atoi(string(v[colNumber]))
+		utils.HandleError(err, "trying to parse string to an int")
+		sum += x
 	}
 
-	return minChar, maxChar
-}
+	numberOf1s := sum
+	numberOf0s := len(ls) - sum
 
+	if numberOf0s > numberOf1s {
+		return "1", "0"
+	} else if numberOf1s > numberOf0s {
+		return "0", "1"
+	} else {
+		return tiebreaker, tiebreaker
+	}
+}
