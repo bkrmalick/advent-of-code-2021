@@ -52,12 +52,6 @@ func filterByCriteria(colIndex int, inp []string, criteria func(chars []string, 
 		return inp[0]
 	}
 
-	// get characters in column number colIndex
-	currentCol := []string{}
-	for _, k := range inp {
-		currentCol = append(currentCol, string(k[colIndex]))
-	}
-
 	// get the required answer for this column
 	criteriaAnsCharacter := criteria(inp, colIndex)
 
