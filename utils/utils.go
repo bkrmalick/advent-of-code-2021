@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 )
 
 
@@ -19,4 +20,10 @@ func HandleError(err error, action string) {
 	if err!= nil {
 		log.Fatalf("Error while %s: %s", action, err)
 	}
+}
+
+func Binary2Int(binary string) int64 {
+	n, err := strconv.ParseInt(binary, 2, 64)
+	HandleError(err, "trying to convert binary to int")
+	return n
 }
