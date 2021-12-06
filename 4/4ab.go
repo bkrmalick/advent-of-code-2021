@@ -19,19 +19,16 @@ type Board struct {
 	points                 []*Point
 	lastCalledNumber       int
 	height, width          int
-	colsMarked, rowsMarked map[int][]int
 	won                    bool
 }
 
 func (b *Board) callNumber(pointVal int) {
 	for _, p := range b.points {
 		if p.val == pointVal {
-			b.colsMarked[p.colNo] = append(b.colsMarked[p.colNo], p.rowNo)
-			b.rowsMarked[p.rowNo] = append(b.rowsMarked[p.rowNo], p.colNo)
-			b.lastCalledNumber = pointVal
 			p.marked = true
+			b.lastCalledNumber = pointVal
 
-			if len(b.colsMarked[p.colNo]) == b.width || len(b.rowsMarked[p.rowNo]) == b.height {
+			if b.isRowFullyMarked(p.rowNo) || b.isColFullyMarked(p.colNo) {
 				b.won = true
 				return
 			}
@@ -39,6 +36,29 @@ func (b *Board) callNumber(pointVal int) {
 	}
 
 }
+
+func (b *Board) isRowFullyMarked(rowNo int) bool {
+	marked := true
+	for _, p := range b.points {
+		if p.rowNo == rowNo && !p.marked{
+			marked = false
+			break
+		}
+	}
+	return marked
+}
+
+func (b *Board) isColFullyMarked(colNo int) bool {
+	marked := true
+	for _, p := range b.points {
+		if p.colNo == colNo && !p.marked{
+			marked = false
+			break
+		}
+	}
+	return marked
+}
+
 
 func (b *Board) calculateScore() int {
 	sumOfUnmarked := 0
@@ -54,9 +74,8 @@ func (b *Board) calculateScore() int {
 }
 
 func newBoard(lines []string) *Board {
-	board := Board{points: make([]*Point, 0), rowsMarked: make(map[int][]int), colsMarked: make(map[int][]int)}
+	board := Board{points: make([]*Point, 0)}
 	board.height = len(lines)
-	//board.width = len(strings.Split(lines[0], " "))
 
 	colIndex := 0
 	boardWidth := 0
