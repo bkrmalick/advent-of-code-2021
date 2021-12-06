@@ -27,3 +27,20 @@ func Binary2Int(binary string) int64 {
 	HandleError(err, "trying to convert binary to int")
 	return n
 }
+
+func String2Int(s string) int {
+	n, err := strconv.Atoi(s)
+	HandleError(err, "trying to convert string to int")
+	return n
+}
+
+func getFile(s string) *os.File {
+	file, err := os.Open("input_numbers_drawn.txt")
+	HandleError(err, "opening input file")
+	defer func(file *os.File) {
+		err := file.Close()
+		HandleError(err, "closing input file")
+	}(file)
+
+	return file
+}
