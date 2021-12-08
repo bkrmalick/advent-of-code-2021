@@ -34,13 +34,22 @@ func String2Int(s string) int {
 	return n
 }
 
-func getFile(s string) *os.File {
-	file, err := os.Open("input_numbers_drawn.txt")
-	HandleError(err, "opening input file")
-	defer func(file *os.File) {
-		err := file.Close()
-		HandleError(err, "closing input file")
-	}(file)
+func Min(ls... int) int {
+	min := ls[0]
+	for _,x := range ls{
+		if x<min{
+			min = x
+		}
+	}
+	return min
+}
 
-	return file
+func Max(ls... int) int {
+	max := ls[0]
+	for _,x := range ls{
+		if x>max{
+			max = x
+		}
+	}
+	return max
 }
