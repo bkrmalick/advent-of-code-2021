@@ -34,6 +34,11 @@ func String2Int(s string) int {
 	return n
 }
 
+func Int2String(i int) string {
+	s := strconv.Itoa(i)
+	return s
+}
+
 func Min(ls... int) int {
 	min := ls[0]
 	for _,x := range ls{
