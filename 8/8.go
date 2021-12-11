@@ -96,7 +96,7 @@ func B() {
 		for !allDigitsFound() {
 			// loop through the ten unique signal patterns
 			for _, o := range s.defs {
-				// check which digit is being display based on the length of string representation o
+				// deduce which digit this string representation corresponds to
 				switch len(o) {
 				case 2:
 					// digit is 1
