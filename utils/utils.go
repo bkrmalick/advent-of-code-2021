@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 	"strconv"
 )
@@ -57,4 +58,85 @@ func Max(ls... int) int {
 		}
 	}
 	return max
+}
+
+func InListInt(x int, ls []int) bool {
+	for _,v := range ls{
+		if v==x{
+			return true
+		}
+	}
+	return false
+}
+
+
+// InList generic in list because golang does not support type parameters
+func InList(x interface{}, ls interface{}) bool {
+	list := reflect.ValueOf(ls)
+	for i:=0;i<list.Len();i++{
+		if list.Index(i).Interface()==x{
+			return true
+		}
+	}
+	return false
+}
+
+// StringIntersect intersection using hash map which allows it to operate in O(n) time
+// e.g utils.StringIntersect("abcd", "xyzad") returns "ad"
+// TODO generalise to interface{} if needed
+func StringIntersect(s1 string, s2 string) string {
+	m := make(map[string]bool) // <character, bool_indicating_if_it_exists>
+	intersection := ""
+
+	for _, c := range s1 {
+		char := string(c)
+		m[char] = true
+	}
+
+	for _, c := range s2 {
+		char := string(c)
+		if m[char] {
+			intersection+=char
+		}
+	}
+
+	return intersection
+}
+
+func StringUnion(s1 string, s2 string) string {
+	m := make(map[string]bool) // <character, bool_indicating_if_it_exists>
+	union := ""
+
+	for _, c := range s1 {
+		char := string(c)
+		m[char] = true
+	}
+
+	for _, c := range s2 {
+		char := string(c)
+		m[char] = true
+	}
+
+	for k,v := range m {
+		if v {
+			union+=k
+		}
+	}
+
+	return union
+}
+
+
+// treats strings as sets, checks if all characters in substr are present in s
+func IsSubset(s string, substr string) bool {
+	m := make(map[string]bool)
+	for _, char := range s {
+		m[string(char)] = true
+	}
+	for _, char := range substr {
+		if !m[string(char)] {
+			return false
+		}
+	}
+	return true
 }
