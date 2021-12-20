@@ -32,24 +32,24 @@ func AB() {
 
 	// declare all possible brackets, and extract opening/closing characters into separate arrays
 	bracketPairToCorruptionScore := map[string]int{
-		"{}":1197,
+		"{}": 1197,
 		"[]": 57,
-		"()":3,
-		"<>":25137,
+		"()": 3,
+		"<>": 25137,
 	}
 	bracketToCompletionScore := map[string]int{
-		")":1,
-		"]":2,
-		"}":3,
-		">":4,
+		")": 1,
+		"]": 2,
+		"}": 3,
+		">": 4,
 	}
 	allPossibleBracketPairs := make([]string, 0)
-	for _,k :=  range reflect.ValueOf(bracketPairToCorruptionScore).MapKeys(){
+	for _, k := range reflect.ValueOf(bracketPairToCorruptionScore).MapKeys() {
 		allPossibleBracketPairs = append(allPossibleBracketPairs, k.String())
 	}
 	var opening []string
 	var closing []string
-	var closingToOpeningBracketMap map[string]string = make(map[string]string)
+	var closingToOpeningBracketMap = make(map[string]string)
 	for _, bracket := range allPossibleBracketPairs {
 		openingBracket := string(bracket[0])
 		closingBracket := string(bracket[1])
@@ -89,9 +89,9 @@ func AB() {
 			currentLineCompletionScore := 0
 			completingBracketsNeeded := findCompletingBrackets(l, allPossibleBracketPairs)
 
-			for _,c:=range completingBracketsNeeded{
-				currentLineCompletionScore*=5
-				currentLineCompletionScore+=bracketToCompletionScore[c]
+			for _, c := range completingBracketsNeeded {
+				currentLineCompletionScore *= 5
+				currentLineCompletionScore += bracketToCompletionScore[c]
 			}
 
 			completionScores = append(completionScores, currentLineCompletionScore)
@@ -101,18 +101,18 @@ func AB() {
 	syntaxErrorScore := calculateCorruptionScore(offendingChars, bracketPairToCorruptionScore)
 	fmt.Println("Total Syntax Error Score: ", syntaxErrorScore)
 
-	overallCompletionScore,_ := stats.Median(stats.LoadRawData(completionScores))
+	overallCompletionScore, _ := stats.Median(stats.LoadRawData(completionScores))
 	fmt.Printf("Overall Completion Score: %v", int(overallCompletionScore))
 
 }
 
-func calculateCorruptionScore(chars []string, scores map[string]int) int{
+func calculateCorruptionScore(chars []string, scores map[string]int) int {
 	totalScore := 0
-	for _,c := range chars{
+	for _, c := range chars {
 
-		for bracketPair, score := range scores{
+		for bracketPair, score := range scores {
 			if strings.Contains(bracketPair, c) {
-				totalScore+=score
+				totalScore += score
 				break
 			}
 		}
@@ -173,7 +173,6 @@ func validateChunk(stoppingChar string, startingIndex int, fullLine string, allP
 	return true
 }
 
-
 // given a line, iterate through it in reverse (right to left) and find brackets which weren't closed,
 // returns a string arrray that will close them in the correct order
 func findCompletingBrackets(fullLine string, allPossibleBracketPairs []string) []string {
@@ -193,14 +192,14 @@ func findCompletingBrackets(fullLine string, allPossibleBracketPairs []string) [
 	}
 	completingBrackets := make([]string, 0)
 	// iterate over line in reverse making sure to update the count map for each type of pair
-	for i := len(fullLine)-1; i >= 0 ; i-- {
+	for i := len(fullLine) - 1; i >= 0; i-- {
 		currentChar := string(fullLine[i])
 		for k, v := range counters {
 			if strings.Contains(k, currentChar) {
 				ind := strings.Index(k, currentChar)
 				if ind == 0 {
 					// opening bracket
-					if v ==0 {
+					if v == 0 {
 						// if value of the counter for this type of bracket is zero,
 						// then we know it was never closed because we're iterating the line right to left
 						completingBrackets = append(completingBrackets, string(k[1]))
