@@ -4,6 +4,7 @@ import (
 	"advent-of-code-21/utils"
 	"bufio"
 	"fmt"
+	"github.com/montanaflynn/stats"
 	"log"
 	"os"
 	"reflect"
@@ -30,14 +31,20 @@ func AB() {
 	}
 
 	// declare all possible brackets, and extract opening/closing characters into separate arrays
-	bracketScores := map[string]int{
+	bracketPairToCorruptionScore := map[string]int{
 		"{}":1197,
 		"[]": 57,
 		"()":3,
 		"<>":25137,
 	}
+	bracketToCompletionScore := map[string]int{
+		")":1,
+		"]":2,
+		"}":3,
+		">":4,
+	}
 	allPossibleBracketPairs := make([]string, 0)
-	for _,k :=  range reflect.ValueOf(bracketScores).MapKeys(){
+	for _,k :=  range reflect.ValueOf(bracketPairToCorruptionScore).MapKeys(){
 		allPossibleBracketPairs = append(allPossibleBracketPairs, k.String())
 	}
 	var opening []string
@@ -52,8 +59,10 @@ func AB() {
 	}
 
 	offendingChars := make([]string, 0)
+	completionScores := make([]int, 0)
 
 	for _, l := range lines {
+		isCorruptedLine := false
 		for charIndex, c := range l {
 			char := string(c)
 
@@ -62,29 +71,43 @@ func AB() {
 			}
 
 			if utils.InList(char, closing) {
-				// closing bracket
+				// this char is a closing bracket, validate the chunk enclosed by it
 				matchingOpening := closingToOpeningBracketMap[char]
-				valid, unclosedBracket := validateChunk(matchingOpening, charIndex-1, l, allPossibleBracketPairs)
+				valid := validateChunk(matchingOpening, charIndex-1, l, allPossibleBracketPairs)
 
 				if !valid {
-					fmt.Printf("Expected %s but found %s when closing at index %s \n", unclosedBracket, char, utils.Int2String(charIndex))
+					fmt.Printf("Found corrupted char %s when closing at index %s \n", char, utils.Int2String(charIndex))
 					offendingChars = append(offendingChars, char)
+					isCorruptedLine = !valid
 					break
 				}
 			}
-
 		}
 
+		if !isCorruptedLine {
+			// line is not corrupted but incomplete
+			currentLineCompletionScore := 0
+			completingBracketsNeeded := findCompletingBrackets(l, allPossibleBracketPairs)
+
+			for _,c:=range completingBracketsNeeded{
+				currentLineCompletionScore*=5
+				currentLineCompletionScore+=bracketToCompletionScore[c]
+			}
+
+			completionScores = append(completionScores, currentLineCompletionScore)
+		}
 	}
 
-	syntaxErrorScore := calculateScore(offendingChars, bracketScores)
+	syntaxErrorScore := calculateCorruptionScore(offendingChars, bracketPairToCorruptionScore)
+	fmt.Println("Total Syntax Error Score: ", syntaxErrorScore)
 
-	fmt.Printf("Total Syntax Error Score: %s", utils.Int2String(syntaxErrorScore))
+	overallCompletionScore,_ := stats.Median(stats.LoadRawData(completionScores))
+	fmt.Printf("Overall Completion Score: %v", int(overallCompletionScore))
+
 }
 
-func calculateScore(chars []string, scores map[string]int) int{
+func calculateCorruptionScore(chars []string, scores map[string]int) int{
 	totalScore := 0
-
 	for _,c := range chars{
 
 		for bracketPair, score := range scores{
@@ -95,14 +118,12 @@ func calculateScore(chars []string, scores map[string]int) int{
 		}
 
 	}
-
 	return totalScore
 }
 
 // given a line and a stoppingChar (i.e. opening bracket that starts the chunk)
 // find out if it is valid, if not return the offending bracket that was never closed within this chunk
-func validateChunk(stoppingChar string, startingIndex int, fullLine string, allPossibleBracketPairs []string) (bool, string) {
-
+func validateChunk(stoppingChar string, startingIndex int, fullLine string, allPossibleBracketPairs []string) bool {
 	/*
 		prepare a map that maintains counters of each bracket pair of the form
 
@@ -143,11 +164,55 @@ func validateChunk(stoppingChar string, startingIndex int, fullLine string, allP
 	}
 
 	// if any type of pair had a non-zero count for this chunk, it is invalid
-	for brackets, count := range counters {
+	for _, count := range counters {
 		if count != 0 {
-			return false, string(brackets[1])
+			return false
 		}
 	}
 
-	return true, ""
+	return true
+}
+
+
+// given a line, iterate through it in reverse (right to left) and find brackets which weren't closed,
+// returns a string arrray that will close them in the correct order
+func findCompletingBrackets(fullLine string, allPossibleBracketPairs []string) []string {
+	/*
+		prepare a map that maintains counters of each bracket pair of the form
+
+		map[string]int{
+			"<>" :0,
+			"{}" :0,
+			"()" :0,
+			"[]" :0,
+		}
+	*/
+	counters := map[string]int{}
+	for _, bracketPair := range allPossibleBracketPairs {
+		counters[bracketPair] = 0
+	}
+	completingBrackets := make([]string, 0)
+	// iterate over line in reverse making sure to update the count map for each type of pair
+	for i := len(fullLine)-1; i >= 0 ; i-- {
+		currentChar := string(fullLine[i])
+		for k, v := range counters {
+			if strings.Contains(k, currentChar) {
+				ind := strings.Index(k, currentChar)
+				if ind == 0 {
+					// opening bracket
+					if v ==0 {
+						// if value of the counter for this type of bracket is zero,
+						// then we know it was never closed because we're iterating the line right to left
+						completingBrackets = append(completingBrackets, string(k[1]))
+					} else {
+						counters[k]++
+					}
+				} else {
+					// closing bracket
+					counters[k]--
+				}
+			}
+		}
+	}
+	return completingBrackets
 }
