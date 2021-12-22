@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+	"sync"
 )
 
 
@@ -162,4 +163,23 @@ func IsSubset(s string, substr string) bool {
 		}
 	}
 	return true
+}
+
+
+func StringSliceToCSV(ls []string) string{
+	s:=""
+	for _,v := range ls {
+		s+=","+v
+	}
+	return s[1:]
+}
+
+// CloseChannelWhenDone waits for a wg then closes the channel c
+// example use:
+// ````
+//  go utils.CloseChannelWhenDone(wg, solutions)
+// ````
+func CloseChannelWhenDone(wg *sync.WaitGroup, c interface{}){
+	wg.Wait()
+	reflect.ValueOf(c).Close() // would usually be close(c) but we want to keep this function generic for all channel types
 }
